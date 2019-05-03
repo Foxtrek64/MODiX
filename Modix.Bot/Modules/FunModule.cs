@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Discord.Commands;
@@ -53,12 +54,13 @@ namespace Modix.Modules
         {
             var client = HttpClientFactory.CreateClient();
             var request = await client.GetStringAsync("https://xkcd.com/info.0.json");
-
             var article = JsonConvert.DeserializeObject<XkcdArticle>(request);
 
-            int latest = article?.Id ?? 2100;
+            var random = new Random();
 
-            await PostXkcd(latest);
+            var latestComicId = article?.Id ?? 2100;
+
+            await PostXkcd(random.Next(1, latestComicId));
         }
 
         [Command("xkcd"), Summary("Posts the specified xkcd article")]
