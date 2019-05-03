@@ -16,7 +16,7 @@ namespace Modix.Services.Mentions
         /// <param name="role">The role to mention</param>
         /// <param name="channel">The channel to mention in</param>
         /// <param name="message">The message to send alongside the mention</param>
-        Task<bool> MentionRoleAsync(IRole role, IMessageChannel channel, string message = null);
+        Task<bool> MentionRoleAsync(IRole role, IMessageChannel channel, string message = null, Embed embed = null);
     }
 
     /// <inheritdoc />
@@ -33,7 +33,7 @@ namespace Modix.Services.Mentions
         }
 
         /// <inheritdoc />
-        public async Task<bool> MentionRoleAsync(IRole role, IMessageChannel channel, string message = null)
+        public async Task<bool> MentionRoleAsync(IRole role, IMessageChannel channel, string message = null, Embed embed = null)
         {
             if (role is null)
                 throw new ArgumentNullException(nameof(role));
@@ -66,7 +66,12 @@ namespace Modix.Services.Mentions
             //Make sure we set the role to unmentionable again no matter what
             try
             {
-                await channel.SendMessageAsync($"{role.Mention} {message}");
+                // This is a temporary hot-fix pending the creation of an EmbedBuilderService
+                // and formatting all bot responses as embeds, where appropriate.
+                if (embed is null)
+                    await channel.SendMessageAsync($"{role.Mention} {message}");
+                else
+                    await channel.SendMessageAsync($"{role.Mention}", embed: embed);
             }
             finally
             {

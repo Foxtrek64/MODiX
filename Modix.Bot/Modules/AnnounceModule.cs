@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Modix.Services.CommandHelp;
 using Modix.Services.Mentions;
+using Modix.Services.Utilities;
 
 namespace Modix.Bot.Modules
 {
@@ -26,8 +28,19 @@ namespace Modix.Bot.Modules
             [Remainder]
             string message)
         {
+            var embed = new EmbedBuilder()
+            {
+                Author = new EmbedAuthorBuilder()
+                {
+                    Name = Context.User.Username,
+                    IconUrl = Context.User.GetDefiniteAvatarUrl()
+                },
+                Description = message,
+                Color = Color.Green
+            }.WithCurrentTimestamp();
+
             // Send message
-            if (await _mentionService.MentionRoleAsync(role, Context.Channel, message))
+            if (await _mentionService.MentionRoleAsync(role, Context.Channel, embed: embed.Build()))
             {
                 // Clean up
                 await Context.Message.DeleteAsync();
