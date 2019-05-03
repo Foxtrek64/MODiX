@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Modix.Services.CommandHelp;
 using Modix.Services.Utilities;
+using Newtonsoft.Json;
 using Serilog;
 
 namespace Modix.Modules
@@ -47,6 +48,45 @@ namespace Modix.Modules
             }
         }
 
+        [Command("xkcd"), Summary("Posts a random xkcd article")]
+        public async Task PostRandomXkcd()
+        {
+            var client = HttpClientFactory.CreateClient();
+            var request = await client.GetStringAsync("https://xkcd.com/info.0.json");
+
+            var article = JsonConvert.DeserializeObject<XkcdArticle>(request);
+
+            int latest = article?.Id ?? 2100;
+
+            await PostXkcd(latest);
+        }
+
+        [Command("xkcd"), Summary("Posts the specified xkcd article")]
+        public async Task PostXkcd([Summary("The zero-based Id of the article you're trying to get.")] int id)
+        {
+            await ReplyAsync($"https://xkcd.com/{id}/");
+        }
+
         protected IHttpClientFactory HttpClientFactory { get; }
+    }
+
+    [JsonObject]
+    internal class XkcdArticle
+    {
+        public int Month { get; set; }
+        [JsonProperty("num")]
+        public int Id { get; set; }
+        public string Link { get; set; }
+        public int Year { get; set; }
+        public string News { get; set; }
+        [JsonProperty("safe_title")]
+        public string SafeTitle { get; set; }
+        public string Transcript { get; set; }
+        [JsonProperty("alt")]
+        public string Description { get; set; }
+        [JsonProperty("img")]
+        public string ImageUrl { get; set; }
+        public string Title { get; set; }
+        public int Day { get; set; }
     }
 }
