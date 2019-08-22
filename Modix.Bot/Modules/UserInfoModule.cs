@@ -66,6 +66,49 @@ namespace Modix.Modules
         private readonly IImageService _imageService;
         private readonly ModixConfig _config;
 
+        // todo: add upper and lower limits to count, somehow...
+        [Command("top")]
+        [Summary("Retrieves information about the most active users.")]
+        public async Task GetTopUsersAsync([Summary("The number of results to return. Default = 10")]int count = 10)
+        {
+            // var userRankTask = _messageRepository.GetGuildUserParticipationStatistics(Context.Guild.Id, Context.User.Id);
+
+            var message = await ReplyAsync("Collecting results. This may take a minute...");
+
+            // Sort list in descending order.
+            // key = username + discrim
+            // value = number of messages in the past month
+            var topTenUsers = new Dictionary<string, int>();
+
+            foreach (var user in await Context.Guild.GetUsersAsync())
+            {
+                var stats = await _messageRepository.GetGuildUserParticipationStatistics(Context.Guild.Id, user.Id);
+                var messagesByDate = await _messageRepository.GetGuildUserMessageCountByDate(Context.Guild.Id, user.Id, TimeSpan.FromDays(30));
+                var monthTotal = 0;
+                foreach (var kvp in messagesByDate)
+                {
+                    monthTotal += kvp.Value;
+                }
+
+                topTenUsers.Add(user.GetFullUsername(), monthTotal);
+                topTenUsers = topTenUsers
+                    .OrderByDescending(x => x.Value)
+                    .Take(count)
+                    .ToDictionary(x => x.Key, x => x.Value);
+            }
+
+            var sb = new StringBuilder();
+            foreach (var user in topTenUsers)
+            {
+                sb.AppendLine($"{user.Key}: {user.Value}");
+            }
+
+            await message.ModifyAsync(x =>
+            {
+                x.Content = $"```{sb.ToString()}```";
+            });
+        }
+
         [Command("info")]
         [Summary("Retrieves information about the supplied user, or the current user if one is not provided.")]
         public async Task GetUserInfoAsync(
